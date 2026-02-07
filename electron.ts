@@ -3,8 +3,8 @@ import * as path from "path";
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: screen.getPrimaryDisplay().bounds.width, // Fullscreen 
+    height: screen.getPrimaryDisplay().bounds.height,
     transparent: true,
     frame: false,
     alwaysOnTop: true,
@@ -15,18 +15,15 @@ function createWindow() {
     }
   });
   
-win.setIgnoreMouseEvents(false);
+  win.setIgnoreMouseEvents(false);
 
- win.loadFile(path.join(__dirname, '../renderer/index.html'));
-  // win.setIgnoreMouseEvents(true, { forward: true });
+  win.loadFile(path.join(__dirname, '../renderer/index.html'));
 
-  // ipcMain.on("set-click-through", (_, enabled: boolean) => {
-  //   win.setIgnoreMouseEvents(enabled, { forward: true });
-  // });
+  // For debugging
+  // win.webContents.openDevTools();
 
-  // Global mouse position
-  ipcMain.handle("get-mouse-pos", () => {
-    return screen.getCursorScreenPoint();
+  ipcMain.on("set-click-through", (_, enabled: boolean) => {
+    win.setIgnoreMouseEvents(enabled, { forward: true });
   });
 }
 

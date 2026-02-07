@@ -18,7 +18,7 @@
         width: 20%;
         position: absolute;
         left: 100px;
-        top: 100px;
+        bottom: 100px;
         width: 120px;
         cursor: pointer;
         user-select: none;
@@ -29,20 +29,22 @@
       
       #message {
         position: absolute;
-    top: 350px;
-    left: 200px;
-    color: white;
-    font-size: 24px;
-    opacity: 0;
-      transition: opacity 0.2s;
-}
+        color: rgb(203, 68, 68);
+        font-size: 24px;
+        opacity: 0;
+        transition: opacity 0.2s;
+        left: 100px;
+        bottom: 220px; 
+        width: 120px;
+        text-align: center;
+      }
 
     </style>
   </head>
   <body>
     <img id="cat" src="./test.png" />
-      <div id="message">🐱 Meow!</div>
+    <div id="message">🐱 Meow!</div>
 
-    <script src="index.js"></script>
+    <script src="index.ts"></script>
   </body>
 </html>

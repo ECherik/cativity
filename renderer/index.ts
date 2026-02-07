@@ -1,44 +1,32 @@
-const cat = document.getElementById("cat") as HTMLImageElement;
+const cat = document.getElementById("cat");
+const message = document.getElementById("message");
 
 if (!cat) {
   throw new Error("Cat element not found");
 }
 
-let lastOverCat = false;
+if (!message) {
+  throw new Error("Message element not found");
+} 
 
-setInterval(async () => {
-  try {
-    const mouse = await window.electron.getMousePos();
-    const rect = cat.getBoundingClientRect();
-
-    const overCat = mouse.x >= rect.left &&
-                    mouse.x <= rect.right &&
-                    mouse.y >= rect.top &&
-                    mouse.y <= rect.bottom;
-
-    if (overCat !== lastOverCat) {
-      window.electron.setClickThrough(!overCat);
-      lastOverCat = overCat;
-    }
-  } catch (err) {
-    console.error(err);
-  }
-}, 16);
+// Default click through enabled
+window.electron.setClickThrough(true);
 
 
-function isOver(rect: DOMRect, x: number, y: number) {
-  return x >= rect.left &&
-         x <= rect.right &&
-         y >= rect.top &&
-         y <= rect.bottom;
-}
+cat.addEventListener("mouseenter", () => {
+  window.electron.setClickThrough(false);
+  console.log("Mouse on cat");
+});
 
-const message = document.getElementById("message") as HTMLDivElement;
+cat.addEventListener("mouseleave", () => {
+  window.electron.setClickThrough(true);
+  console.log("Mouse NOT on cat");
+});
 
 cat.addEventListener("click", () => {
+  console.log("Cat clicked");
   message.style.opacity = "1";
-
   setTimeout(() => {
     message.style.opacity = "0";
-  }, 100000000000);
+  }, 2000);
 });
