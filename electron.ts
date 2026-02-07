@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain, screen } from "electron";
 import * as path from "path";
 
 function createWindow() {
@@ -14,9 +14,20 @@ function createWindow() {
       contextIsolation: true
     }
   });
+  
+win.setIgnoreMouseEvents(false);
 
  win.loadFile(path.join(__dirname, '../renderer/index.html'));
-  win.setIgnoreMouseEvents(true, { forward: true });
+  // win.setIgnoreMouseEvents(true, { forward: true });
+
+  // ipcMain.on("set-click-through", (_, enabled: boolean) => {
+  //   win.setIgnoreMouseEvents(enabled, { forward: true });
+  // });
+
+  // Global mouse position
+  ipcMain.handle("get-mouse-pos", () => {
+    return screen.getCursorScreenPoint();
+  });
 }
 
 app.on("ready", createWindow);
