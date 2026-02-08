@@ -35,6 +35,7 @@ function initializeActivity(messageElement: HTMLElement) {
 }
 
 const cat = document.getElementById("cat");
+const catBody = document.getElementById("cat-body")!;
 const message = document.getElementById("message");
 
 if (!cat) {
@@ -71,10 +72,8 @@ let isDragging = false;
 let offsetX = 0;
 let offsetY = 0;
 
-
-// Set initial position at bottom center
 let currentX = (window.innerWidth - cat.offsetWidth) / 2;
-let currentY = window.innerHeight - cat.offsetHeight - 8; // 8px margin from bottom
+let currentY = window.innerHeight - cat.offsetHeight - 8;
 let targetX = currentX;
 let targetY = currentY;
 
@@ -86,45 +85,46 @@ cat.draggable = false;
 
 cat.addEventListener("mousedown", (e) => {
   isDragging = true;
-
-  const rect = cat.getBoundingClientRect();
-  offsetX = e.clientX - rect.left;
-  offsetY = e.clientY - rect.top;
-
+  offsetX = e.clientX - cat.getBoundingClientRect().left;
+  offsetY = e.clientY - cat.getBoundingClientRect().top;
   window.electron.setClickThrough(false);
 });
 
 document.addEventListener("mousemove", (e) => {
   if (!isDragging) return;
 
-  targetX = e.clientX - offsetX;
-  targetY = e.clientY - offsetY;
+  const speed = 0.25;
+  const mouseX = e.clientX - offsetX;
+  const mouseY = e.clientY - offsetY;
+
+  targetX += (mouseX - targetX) * speed;
+  targetY += (mouseY - targetY) * speed;
 });
 
 document.addEventListener("mouseup", () => {
   if (!isDragging) return;
   isDragging = false;
 
-  const rect = cat.getBoundingClientRect();
-  targetY = window.innerHeight - rect.height - 8; // bottom margin
-  targetX = currentX; // drop straight down (optional)
+
+  targetY = window.innerHeight - cat.offsetHeight - 8;
+  targetX = currentX;
 
   window.electron.setClickThrough(true);
 });
 
-
 function movementLoop() {
-  if (!cat) return;
-  // Make falling (after drag) slower than dragging
-  const speed = isDragging ? 0.35 : 0.1; // 0.05 is slower fall
+  const speed = isDragging ? 0.25 : 0.08;
 
   currentX += (targetX - currentX) * speed;
   currentY += (targetY - currentY) * speed;
 
+  if(!cat) return;
   cat.style.transform = `translate(${currentX}px, ${currentY}px)`;
-
+  const flip = targetX < currentX ? -1 : 1; 
+  catBody.style.transform = `scaleX(${flip})`;
   requestAnimationFrame(movementLoop);
 }
+
 movementLoop();
 
 
@@ -179,20 +179,27 @@ function isCatMoving() {
 }
 
 function animateCatState() {
-  if (!cat) return;
   if (isCatMoving()) {
-    cat.style.backgroundImage = `url('${walkFrames[animFrame % walkFrames.length]}')`;
+    catBody.style.backgroundImage = `url('${walkFrames[animFrame % walkFrames.length]}')`;
     const duration = walkDurations[animFrame % walkDurations.length];
     animFrame = (animFrame + 1) % walkFrames.length;
     setTimeout(animateCatState, duration);
   } else {
-    cat.style.backgroundImage = `url('${idleFrame}')`;
+    catBody.style.backgroundImage = `url('${idleFrame}')`;
     animFrame = 0;
-    setTimeout(animateCatState, 120); 
+    setTimeout(animateCatState, 120);
   }
 }
-
 animateCatState();
+
+
+function faceDirection(cat: HTMLElement, direction: "left" | "right") {
+  if (direction === "left") {
+    cat.style.transform = `translate(${currentX}px, ${currentY}px) scaleX(-1)`;
+  } else {
+    cat.style.transform = `translate(${currentX}px, ${currentY}px) scaleX(1)`;
+  }
+}
 
 // Initialize activity display
 initializeActivity(message!);

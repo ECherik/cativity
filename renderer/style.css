@@ -51,6 +51,21 @@ body {
   cursor: grabbing;
 }
 
+.cat-body {
+  height: 100px;
+  width: 100px;
+  cursor: pointer;
+  user-select: none;
+  pointer-events: auto;
+  background-size: contain;
+  cursor: grab;
+  touch-action: none;
+  transition:
+    transform 0.12s ease,
+    left 0.1s,
+    top 0.1s;
+}
+
 .message {
   position: absolute;
   color: var(--fg);
