@@ -1,5 +1,5 @@
 :root {
-  --bg: rgba(0, 0, 0, 0.35);
+  --bg: transparent;
   --fg: #ffffff;
   --accent: #6ee7b7;
   --font-sans: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -35,9 +35,7 @@ body {
 .cat {
   height: 100px;
   width: 100px;
-  position: absolute;
-  left: 100px;
-  top: 100px;
+  cursor: pointer;
   user-select: none;
   pointer-events: auto;
   background-size: contain;
@@ -51,6 +49,21 @@ body {
 
 .cat:active {
   cursor: grabbing;
+}
+
+.cat-body {
+  height: 100px;
+  width: 100px;
+  cursor: pointer;
+  user-select: none;
+  pointer-events: auto;
+  background-size: contain;
+  cursor: grab;
+  touch-action: none;
+  transition:
+    transform 0.12s ease,
+    left 0.1s,
+    top 0.1s;
 }
 
 .message {

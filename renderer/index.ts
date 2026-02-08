@@ -14,6 +14,7 @@ function initializeActivity(messageElement: HTMLElement) {
 }
 
 const cat = document.getElementById("cat");
+const catBody = document.getElementById("cat-body")!;
 const message = document.getElementById("message");
 
 if (!cat) {
@@ -45,29 +46,68 @@ cat.addEventListener("click", () => {
   }, 2000);
 });
 
+//Dragging 
 let isDragging = false;
 let offsetX = 0;
 let offsetY = 0;
+
+let currentX = (window.innerWidth - cat.offsetWidth) / 2;
+let currentY = window.innerHeight - cat.offsetHeight - 8;
+let targetX = currentX;
+let targetY = currentY;
+
+cat.style.position = "fixed";
+cat.style.left = "0";
+cat.style.top = "0";
+cat.style.willChange = "transform";
+cat.draggable = false;
 
 cat.addEventListener("mousedown", (e) => {
   isDragging = true;
   offsetX = e.clientX - cat.getBoundingClientRect().left;
   offsetY = e.clientY - cat.getBoundingClientRect().top;
-  window.electron.setClickThrough(false); // so mouse works while dragging
+  window.electron.setClickThrough(false);
 });
 
 document.addEventListener("mousemove", (e) => {
   if (!isDragging) return;
-  cat.style.position = "absolute";
-  cat.style.left = `${e.clientX - offsetX}px`;
-  cat.style.top = `${e.clientY - offsetY}px`;
+
+  const speed = 0.25;
+  const mouseX = e.clientX - offsetX;
+  const mouseY = e.clientY - offsetY;
+
+  targetX += (mouseX - targetX) * speed;
+  targetY += (mouseY - targetY) * speed;
 });
 
 document.addEventListener("mouseup", () => {
+  if (!isDragging) return;
   isDragging = false;
+
+
+  targetY = window.innerHeight - cat.offsetHeight - 8;
+  targetX = currentX;
+
   window.electron.setClickThrough(true);
 });
 
+function movementLoop() {
+  const speed = isDragging ? 0.25 : 0.08;
+
+  currentX += (targetX - currentX) * speed;
+  currentY += (targetY - currentY) * speed;
+
+  if(!cat) return;
+  cat.style.transform = `translate(${currentX}px, ${currentY}px)`;
+  const flip = targetX < currentX ? -1 : 1; 
+  catBody.style.transform = `scaleX(${flip})`;
+  requestAnimationFrame(movementLoop);
+}
+
+movementLoop();
+
+
+//movement with arrow keys
 const keys: Record<string, boolean> = {};
 
 document.addEventListener("keydown", (e) => {
@@ -81,55 +121,63 @@ document.addEventListener("keyup", (e) => {
 const step = 5; // pixels per frame
 
 function moveCat() {
-  const cat = document.getElementById("cat");
+  // Only move if not dragging
+  if (isDragging) {
+    requestAnimationFrame(moveCat);
+    return;
+  }
   if (!cat) return;
-  const rect = cat.getBoundingClientRect();
-  cat.style.position = "absolute";
-  const containerWidth = window.innerWidth;
-  const containerHeight = window.innerHeight;
+  const margin = 8;
+  const catWidth = cat.offsetWidth;
+  const catHeight = cat.offsetHeight;
+  const maxX = window.innerWidth - catWidth - margin;
+  const maxY = window.innerHeight - catHeight - margin;
 
-  if (keys["ArrowUp"]) cat.style.top = `${Math.max(0, rect.top - step)}px`;
-  if (keys["ArrowDown"])
-    cat.style.top = `${Math.min(containerHeight - rect.height, rect.top + step)}px`;
-  if (keys["ArrowLeft"]) cat.style.left = `${Math.max(0, rect.left - step)}px`;
-  if (keys["ArrowRight"])
-    cat.style.left = `${Math.min(containerWidth - rect.width, rect.left + step)}px`;
+  if (keys["ArrowUp"]) targetY = Math.max(margin, targetY - step);
+  if (keys["ArrowDown"]) targetY = Math.min(maxY, targetY + step);
+  if (keys["ArrowLeft"]) targetX = Math.max(margin, targetX - step);
+  if (keys["ArrowRight"]) targetX = Math.min(maxX, targetX + step);
 
   requestAnimationFrame(moveCat);
 }
-
 moveCat();
 
-// Animation code
-const cats = document.querySelectorAll(".cat");
-
-const catFrames = [
+// Animation: idle vs moving with per-frame durations
+const walkFrames = [
   "../assets/cat_walk1.png",
   "../assets/cat_idle.png",
   "../assets/cat_walk2.png",
   "../assets/cat_idle.png",
 ];
+const walkDurations = [120, 80, 120, 80]; // ms for each frame
+const idleFrame = "../assets/cat_idle.png";
+let animFrame = 0;
 
-const durations = [120, 80, 120, 80]; // in milliseconds
+function isCatMoving() {
+  return isDragging || keys["ArrowUp"] || keys["ArrowDown"] || keys["ArrowLeft"] || keys["ArrowRight"];
+}
 
-cats.forEach((c, index) => {
-  if (c instanceof HTMLElement) {
-    setTimeout(() => animateCat(c), index * 200);
+function animateCatState() {
+  if (isCatMoving()) {
+    catBody.style.backgroundImage = `url('${walkFrames[animFrame % walkFrames.length]}')`;
+    const duration = walkDurations[animFrame % walkDurations.length];
+    animFrame = (animFrame + 1) % walkFrames.length;
+    setTimeout(animateCatState, duration);
+  } else {
+    catBody.style.backgroundImage = `url('${idleFrame}')`;
+    animFrame = 0;
+    setTimeout(animateCatState, 120);
   }
-});
+}
+animateCatState();
 
-function animateCat(cat: HTMLElement) {
-  let i = 0;
-  function step() {
-    cat.style.backgroundImage = `url('${catFrames[i]}')`;
 
-    setTimeout(() => {
-      i = (i + 1) % catFrames.length;
-      step();
-    }, durations[i]);
+function faceDirection(cat: HTMLElement, direction: "left" | "right") {
+  if (direction === "left") {
+    cat.style.transform = `translate(${currentX}px, ${currentY}px) scaleX(-1)`;
+  } else {
+    cat.style.transform = `translate(${currentX}px, ${currentY}px) scaleX(1)`;
   }
-
-  step();
 }
 
 // Initialize activity display
