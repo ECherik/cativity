@@ -1,10 +1,35 @@
+:root {
+  --bg: rgba(0, 0, 0, 0.35);
+  --fg: #ffffff;
+  --accent: #6ee7b7;
+  --font-sans: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+}
 body {
   margin: 0;
   padding: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.app-container {
+  position: relative;
+  width: min(100%, 980px);
+  height: min(100%, 720px);
+  max-width: 98vw;
+  max-height: 98vh;
 }
 
 .cat {
@@ -13,13 +38,15 @@ body {
   position: absolute;
   left: 100px;
   top: 100px;
-  cursor: pointer;
   user-select: none;
   pointer-events: auto;
   background-size: contain;
-  position: absolute;
   cursor: grab;
-  transition: top 0.1s, left 0.1s;
+  touch-action: none;
+  transition:
+    transform 0.12s ease,
+    left 0.1s,
+    top 0.1s;
 }
 
 .cat:active {
@@ -28,12 +55,29 @@ body {
 
 .message {
   position: absolute;
-  color: white;
-  font-size: 24px;
-  opacity: 0;
-  transition: opacity 0.2s;
-  left: 100px;
-  top: 220px;
-  width: 120px;
+  color: var(--fg);
+  font-size: 18px;
+  opacity: 1;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+  left: 50%;
+  top: -20px;
+  width: 300px;
+  transform: translateX(-50%);
   text-align: center;
+  font-weight: 700;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+@media (max-width: 520px) {
+  .cat {
+    height: 72px;
+    width: 72px;
+  }
+  .message {
+    font-size: 16px;
+    width: 220px;
+  }
 }

@@ -1,3 +1,39 @@
+// Activities to display
+const activities = [
+  "Working coding.....",
+  "Writing....",
+  "Music....",
+  "Reading....",
+  "Debugging....",
+  "Designing....",
+  "Learning....",
+];
+
+let currentActivityIndex = 0;
+
+function rotateActivity(messageElement: HTMLElement) {
+  messageElement.textContent = activities[currentActivityIndex];
+  messageElement.style.opacity = "1";
+  currentActivityIndex = (currentActivityIndex + 1) % activities.length;
+  console.log("[Activity] Displaying activity:", messageElement.textContent);
+}
+
+function initializeActivity(messageElement: HTMLElement) {
+  // Show activities every 3 seconds
+  setInterval(() => rotateActivity(messageElement), 3000);
+
+  // React to activity changes from the main process
+  if (window.electron.onActivityChanged) {
+    window.electron.onActivityChanged((data: any) => {
+      console.log("[Activity] Activity changed:", data);
+      messageElement.textContent = data.activity || data.app || "...";
+      messageElement.style.opacity = "1";
+      console.log("[Activity] Displaying message:", messageElement.textContent);
+      // Keep message visible permanently - no timeout to fade it out
+    });
+  }
+}
+
 const cat = document.getElementById("cat");
 const message = document.getElementById("message");
 
@@ -7,11 +43,10 @@ if (!cat) {
 
 if (!message) {
   throw new Error("Message element not found");
-} 
+}
 
 // Default click through enabled
 window.electron.setClickThrough(true);
-
 
 cat.addEventListener("mouseenter", () => {
   window.electron.setClickThrough(false);
@@ -54,7 +89,6 @@ document.addEventListener("mouseup", () => {
   window.electron.setClickThrough(true);
 });
 
-
 const keys: Record<string, boolean> = {};
 
 document.addEventListener("keydown", (e) => {
@@ -75,16 +109,17 @@ function moveCat() {
   const containerWidth = window.innerWidth;
   const containerHeight = window.innerHeight;
 
-if (keys["ArrowUp"]) cat.style.top = `${Math.max(0, rect.top - step)}px`;
-if (keys["ArrowDown"]) cat.style.top = `${Math.min(containerHeight - rect.height, rect.top + step)}px`;
-if (keys["ArrowLeft"]) cat.style.left = `${Math.max(0, rect.left - step)}px`;
-if (keys["ArrowRight"]) cat.style.left = `${Math.min(containerWidth - rect.width, rect.left + step)}px`;
+  if (keys["ArrowUp"]) cat.style.top = `${Math.max(0, rect.top - step)}px`;
+  if (keys["ArrowDown"])
+    cat.style.top = `${Math.min(containerHeight - rect.height, rect.top + step)}px`;
+  if (keys["ArrowLeft"]) cat.style.left = `${Math.max(0, rect.left - step)}px`;
+  if (keys["ArrowRight"])
+    cat.style.left = `${Math.min(containerWidth - rect.width, rect.left + step)}px`;
 
   requestAnimationFrame(moveCat);
 }
 
 moveCat();
-
 
 // Animation code
 const cats = document.querySelectorAll(".cat");
@@ -93,9 +128,8 @@ const catFrames = [
   "../assets/cat_walk1.png",
   "../assets/cat_idle.png",
   "../assets/cat_walk2.png",
-  "../assets/cat_idle.png"
+  "../assets/cat_idle.png",
 ];
-
 
 const durations = [120, 80, 120, 80]; // in milliseconds
 
@@ -106,16 +140,18 @@ cats.forEach((c, index) => {
 });
 
 function animateCat(cat: HTMLElement) {
-    let i = 0;
-    function step() {
-        cat.style.backgroundImage = `url('${catFrames[i]}')`;
+  let i = 0;
+  function step() {
+    cat.style.backgroundImage = `url('${catFrames[i]}')`;
 
-        setTimeout(() => {
-        i = (i + 1) % catFrames.length;
-        step();
-        }, durations[i]);
-    }
+    setTimeout(() => {
+      i = (i + 1) % catFrames.length;
+      step();
+    }, durations[i]);
+  }
 
   step();
 }
 
+// Initialize activity display
+initializeActivity(message!);
