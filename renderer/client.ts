@@ -1,5 +1,6 @@
 import io from "socket.io-client";
 import { Cat } from "../shared/types";
+import { initChat } from "./chat";
 
 const socket = io("http://localhost:3000"); // adjust for production
 
@@ -30,6 +31,8 @@ function createCatElement(cat: Cat) {
   return catDiv;
 }
 
+initChat(socket, catsOnScreen, cat);
+
 // Initialize all cats
 socket.on("init", (cats: Cat[]) => {
   cats.forEach(cat => {
@@ -55,7 +58,6 @@ socket.on("catMoved", (cat: Cat) => {
   // Add animation logic based on cat.anim if you want
 
   animateCatState();
-
 
 });
 
@@ -101,9 +103,6 @@ function movementLoop() {
 
   requestAnimationFrame(movementLoop);
 }
-
-
-
 
 let currentActivityIndex = 0;
 

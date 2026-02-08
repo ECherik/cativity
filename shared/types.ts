@@ -5,3 +5,8 @@ export interface Cat{
   anim: 'idle' | 'walk' | 'jump';
   message?: string;
 }
+
+export interface ChatMessagePayload {
+  id: string;
+  message: string;
+}
