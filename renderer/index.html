@@ -3,55 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <title>Cats</title>
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-        background: rgba(0, 0, 0, 0.3); /* TEMP: so you can see the window */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      #cat {
-        height: 20%;
-        width: 20%;
-        position: absolute;
-        left: 100px;
-        bottom: 100px;
-        width: 120px;
-        cursor: pointer;
-        user-select: none;
-      }
-      #cat {
-        pointer-events: auto;
-      }
-      
-      #message {
-        position: absolute;
-        color: rgb(203, 68, 68);
-        font-size: 24px;
-        opacity: 0;
-        transition: opacity 0.2s;
-        left: 100px;
-        bottom: 220px; 
-        width: 120px;
-        text-align: center;
-      }
-      #cat {
-  position: absolute;
-  cursor: grab;
-  transition: top 0.1s, left 0.1s;
-}
-#cat:active {
-  cursor: grabbing;
-}
-
-    </style>
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div id="message">🐱 Meow!</div>
-    <div class="cat"></div>
+    <div class="cat" id="cat"></div>
+    <div class="message" id="message">🐱 Meow!</div>
     <script src="../dist/renderer/index.js"></script>
   </body>
-</html>
+</html>/

@@ -85,6 +85,10 @@ if (keys["ArrowRight"]) cat.style.left = `${Math.min(containerWidth - rect.width
 
 moveCat();
 
+
+// Animation code
+const cats = document.querySelectorAll(".cat");
+
 const catFrames = [
   "../assets/cat_walk1.png",
   "../assets/cat_idle.png",
@@ -92,15 +96,13 @@ const catFrames = [
   "../assets/cat_idle.png"
 ];
 
-const cats = document.querySelectorAll(".cat");
 
 const durations = [120, 80, 120, 80]; // in milliseconds
 
-cats.forEach((cat, index) => {
-  let frameIndex = 0;
-
-  // random offset so cats don't sync perfectly
-  setTimeout(() => animateCat(cat), index * 200);
+cats.forEach((c, index) => {
+  if (c instanceof HTMLElement) {
+    setTimeout(() => animateCat(c), index * 200);
+  }
 });
 
 function animateCat(cat: HTMLElement) {

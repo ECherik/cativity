@@ -1,0 +1,39 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cat {
+  height: 100px;
+  width: 100px;
+  position: absolute;
+  left: 100px;
+  top: 100px;
+  cursor: pointer;
+  user-select: none;
+  pointer-events: auto;
+  background-size: contain;
+  position: absolute;
+  cursor: grab;
+  transition: top 0.1s, left 0.1s;
+}
+
+.cat:active {
+  cursor: grabbing;
+}
+
+.message {
+  position: absolute;
+  color: white;
+  font-size: 24px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  left: 100px;
+  top: 220px;
+  width: 120px;
+  text-align: center;
+}
