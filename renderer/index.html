@@ -4,6 +4,20 @@
     <meta charset="UTF-8" />
     <title>Cats</title>
     <link rel="stylesheet" href="style.css" />
+    <style>
+    .cat {
+  position: fixed;
+  width: 64px;
+  height: 64px;
+  pointer-events: auto;
+}
+
+.cat-body {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-repeat: no-repeat;
+}</style>
   </head>
   <body>
     <div class="cat" id="cat">
@@ -11,6 +25,6 @@
       <div class="cat-body" id="cat-body"></div>
     </div>
 
-    <script src="../dist/renderer/index.js"></script>
+    <script src="../dist/renderer/client.js"></script>
   </body>
 </html>

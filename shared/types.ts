@@ -1,4 +1,4 @@
-export interface CatState {
+export interface Cat{
   id: string;
   x: number;
   y: number;

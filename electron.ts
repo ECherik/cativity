@@ -176,7 +176,7 @@ function createWindow() {
   });
 
   // For debugging
-  // win.webContents.openDevTools();
+  win.webContents.openDevTools();
 
   ipcMain.on("set-click-through", (_, enabled: boolean) => {
     (win as any).setIgnoreMouseEvents(enabled, {forward: true});
