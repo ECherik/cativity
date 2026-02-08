@@ -11,7 +11,7 @@ export function initAuth(socket: ReturnType<typeof io>) {
         </div>
 
         <div class="auth-panel" id="panel-signin">
-          <h2>Welcome back</h2>
+          <h2>Welcome back to Cativity!</h2>
           <input type="text" id="signin-username" placeholder="Username" />
           <input type="password" id="signin-password" placeholder="Password" />
           <div id="auth-error" class="auth-error hidden"></div>
@@ -19,7 +19,7 @@ export function initAuth(socket: ReturnType<typeof io>) {
         </div>
 
         <div class="auth-panel hidden" id="panel-signup">
-          <h2>Create your account</h2>
+          <h2>Create your cativity account </h2>
           <input type="text" id="signup-username" placeholder="Choose a username" />
           <input type="password" id="signup-password" placeholder="Choose a password" />
 
