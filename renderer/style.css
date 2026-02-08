@@ -1,7 +1,7 @@
 body {
   margin: 0;
   padding: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background:transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10,14 +10,10 @@ body {
 .cat {
   height: 100px;
   width: 100px;
-  position: absolute;
-  left: 100px;
-  top: 100px;
   cursor: pointer;
   user-select: none;
   pointer-events: auto;
   background-size: contain;
-  position: absolute;
   cursor: grab;
   transition: top 0.1s, left 0.1s;
 }

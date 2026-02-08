@@ -31,30 +31,69 @@ cat.addEventListener("click", () => {
   }, 2000);
 });
 
+//Dragging 
 let isDragging = false;
 let offsetX = 0;
 let offsetY = 0;
 
+
+// Set initial position at bottom center
+let currentX = (window.innerWidth - cat.offsetWidth) / 2;
+let currentY = window.innerHeight - cat.offsetHeight - 8; // 8px margin from bottom
+let targetX = currentX;
+let targetY = currentY;
+
+cat.style.position = "fixed";
+cat.style.left = "0";
+cat.style.top = "0";
+cat.style.willChange = "transform";
+cat.draggable = false;
+
 cat.addEventListener("mousedown", (e) => {
   isDragging = true;
-  offsetX = e.clientX - cat.getBoundingClientRect().left;
-  offsetY = e.clientY - cat.getBoundingClientRect().top;
-  window.electron.setClickThrough(false); // so mouse works while dragging
+
+  const rect = cat.getBoundingClientRect();
+  offsetX = e.clientX - rect.left;
+  offsetY = e.clientY - rect.top;
+
+  window.electron.setClickThrough(false);
 });
 
 document.addEventListener("mousemove", (e) => {
   if (!isDragging) return;
-  cat.style.position = "absolute";
-  cat.style.left = `${e.clientX - offsetX}px`;
-  cat.style.top = `${e.clientY - offsetY}px`;
+
+  targetX = e.clientX - offsetX;
+  targetY = e.clientY - offsetY;
 });
 
 document.addEventListener("mouseup", () => {
+  if (!isDragging) return;
   isDragging = false;
+
+  const rect = cat.getBoundingClientRect();
+  targetY = window.innerHeight - rect.height - 8; // bottom margin
+  targetX = currentX; // drop straight down (optional)
+
   window.electron.setClickThrough(true);
 });
 
 
+function movementLoop() {
+  if (!cat) return;
+  // Make falling (after drag) slower than dragging
+  const speed = isDragging ? 0.35 : 0.1; // 0.05 is slower fall
+
+  currentX += (targetX - currentX) * speed;
+  currentY += (targetY - currentY) * speed;
+
+  cat.style.transform = `translate(${currentX}px, ${currentY}px)`;
+
+  requestAnimationFrame(movementLoop);
+}
+movementLoop();
+
+
+//movement with arrow keys
 const keys: Record<string, boolean> = {};
 
 document.addEventListener("keydown", (e) => {
@@ -68,54 +107,55 @@ document.addEventListener("keyup", (e) => {
 const step = 5; // pixels per frame
 
 function moveCat() {
-  const cat = document.getElementById("cat");
+  // Only move if not dragging
+  if (isDragging) {
+    requestAnimationFrame(moveCat);
+    return;
+  }
   if (!cat) return;
-  const rect = cat.getBoundingClientRect();
-  cat.style.position = "absolute";
-  const containerWidth = window.innerWidth;
-  const containerHeight = window.innerHeight;
+  const margin = 8;
+  const catWidth = cat.offsetWidth;
+  const catHeight = cat.offsetHeight;
+  const maxX = window.innerWidth - catWidth - margin;
+  const maxY = window.innerHeight - catHeight - margin;
 
-if (keys["ArrowUp"]) cat.style.top = `${Math.max(0, rect.top - step)}px`;
-if (keys["ArrowDown"]) cat.style.top = `${Math.min(containerHeight - rect.height, rect.top + step)}px`;
-if (keys["ArrowLeft"]) cat.style.left = `${Math.max(0, rect.left - step)}px`;
-if (keys["ArrowRight"]) cat.style.left = `${Math.min(containerWidth - rect.width, rect.left + step)}px`;
+  if (keys["ArrowUp"]) targetY = Math.max(margin, targetY - step);
+  if (keys["ArrowDown"]) targetY = Math.min(maxY, targetY + step);
+  if (keys["ArrowLeft"]) targetX = Math.max(margin, targetX - step);
+  if (keys["ArrowRight"]) targetX = Math.min(maxX, targetX + step);
 
   requestAnimationFrame(moveCat);
 }
-
 moveCat();
 
-
-// Animation code
-const cats = document.querySelectorAll(".cat");
-
-const catFrames = [
+// Animation: idle vs moving with per-frame durations
+const walkFrames = [
   "../assets/cat_walk1.png",
   "../assets/cat_idle.png",
   "../assets/cat_walk2.png",
   "../assets/cat_idle.png"
 ];
+const walkDurations = [120, 80, 120, 80]; // ms for each frame
+const idleFrame = "../assets/cat_idle.png";
+let animFrame = 0;
 
-
-const durations = [120, 80, 120, 80]; // in milliseconds
-
-cats.forEach((c, index) => {
-  if (c instanceof HTMLElement) {
-    setTimeout(() => animateCat(c), index * 200);
-  }
-});
-
-function animateCat(cat: HTMLElement) {
-    let i = 0;
-    function step() {
-        cat.style.backgroundImage = `url('${catFrames[i]}')`;
-
-        setTimeout(() => {
-        i = (i + 1) % catFrames.length;
-        step();
-        }, durations[i]);
-    }
-
-  step();
+function isCatMoving() {
+  return isDragging || keys["ArrowUp"] || keys["ArrowDown"] || keys["ArrowLeft"] || keys["ArrowRight"];
 }
+
+function animateCatState() {
+  if (!cat) return;
+  if (isCatMoving()) {
+    cat.style.backgroundImage = `url('${walkFrames[animFrame % walkFrames.length]}')`;
+    const duration = walkDurations[animFrame % walkDurations.length];
+    animFrame = (animFrame + 1) % walkFrames.length;
+    setTimeout(animateCatState, duration);
+  } else {
+    cat.style.backgroundImage = `url('${idleFrame}')`;
+    animFrame = 0;
+    setTimeout(animateCatState, 120); 
+  }
+}
+
+animateCatState();
 
