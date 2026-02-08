@@ -2,6 +2,7 @@ import io from "socket.io-client";
 import {Cat} from "../shared/types";
 import {initChat} from "./chat";
 import {app} from "electron";
+import {initAuth} from "./auth";
 
 const socket = io("http://localhost:3000"); // adjust for production
 
@@ -20,67 +21,7 @@ window.addEventListener("DOMContentLoaded", () => {
   cat.hidden = true;
   cat.style.display = "none";
 
-  function createSignInElement() {
-    signIn.innerHTML = `
-    <div class="sign-in-container">
-      <h2>Sign In</h2>
-      <input type="text" id="username" placeholder="Username" />
-       <div class="color-selection">
-        <label>Choose your cat color:</label>
-        <div class="color-options">
-          <div class="color-option" data-color="orange" style="background: #ff9966;" title="Orange"></div>
-          <div class="color-option" data-color="gray" style="background: #999999;" title="Gray"></div>
-          <div class="color-option" data-color="black" style="background: #333333;" title="Black"></div>
-          <div class="color-option" data-color="white" style="background: #ffffff; border: 2px solid #ddd;" title="White"></div>
-          <div class="color-option selected" data-color="brown" style="background: #8B4513;" title="Brown"></div>
-        </div>
-      </div>
-      <button id="sign-in-btn">Sign In</button>
-    </div>
-  `;
-    let selectedColor = "brown"; // Default color
-
-    // Handle color selection
-    const colorOptions = document.querySelectorAll(".color-option");
-    colorOptions.forEach((option) => {
-      option.addEventListener("click", () => {
-        // Remove selected class from all
-        colorOptions.forEach((opt) => opt.classList.remove("selected"));
-
-        // Add selected class to clicked option
-        option.classList.add("selected");
-
-        // Store selected color
-        selectedColor = option.getAttribute("data-color") || "brown";
-      });
-    });
-
-    const signInBtn = document.getElementById("sign-in-btn")!;
-    signInBtn.addEventListener("click", () => {
-      const usernameInput = document.getElementById(
-        "username",
-      ) as HTMLInputElement;
-      const username = usernameInput.value;
-
-      if (!username || username.trim() === "") {
-        alert("Please enter a username");
-        return;
-      }
-
-      // Send username AND color to server
-      socket.emit("signIn", {username, color: selectedColor});
-    });
-
-    // ✨ Also handle Enter key in username input
-    const usernameInput = document.getElementById(
-      "username",
-    ) as HTMLInputElement;
-    usernameInput?.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") {
-        signInBtn.click();
-      }
-    });
-  }
+  initAuth(socket);
   // Apply cat color (when you receive cat data from server)
   function applyCatColor(catElement: HTMLElement, color: string) {
     const colorFilters = {
@@ -127,26 +68,7 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   initChat(socket, catsOnScreen, cat);
-  socket.on("connect", () => {
-    console.log("Connected to server with ID:", socket.id);
-    createSignInElement();
 
-    // ✨ Make sure cat is hidden on connect
-    cat.hidden = true;
-    cat.style.display = "none";
-  });
-
-  socket.on("disconnect", () => {
-    console.log("Disconnected from server");
-    signIn.innerHTML = "";
-    signedIn = false;
-
-    // ✨ Hide cat on disconnect
-    cat.hidden = true;
-    cat.style.display = "none";
-
-    // Optionally, you could clear the screen of cats or show a message
-  });
   // Initialize all cats
   socket.on("init", (cats: Cat[]) => {
     console.log("Initializing cats:", cats);
@@ -252,7 +174,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (window.electron.onActivityChanged) {
       window.electron.onActivityChanged((data: any) => {
         console.log("[Activity] Activity changed:", data);
-        messageElement.textContent = data.category || data.activity || "...";
+        messageElement.textContent = data.category || "...";
         messageElement.style.opacity = "1";
         console.log(
           "[Activity] Displaying message:",

@@ -57,71 +57,70 @@ class ActivityMonitoring {
   }
 
   private categorizeActivity(appTitle: string): string {
+    if (!appTitle) return "unknown";
+
     const title = appTitle.toLowerCase();
 
-    // Coding
+    // VS Code / Coding tools
     if (
       title.includes("visual studio code") ||
       title.includes("vs code") ||
-      title.includes("intellij") ||
-      title.includes("pycharm") ||
-      title.includes("sublime") ||
-      title.includes("vim") ||
-      title.includes("neovim") ||
-      title.includes("webstorm") ||
-      title.includes("github") ||
-      title.includes("gitlab")
+      title.includes("vscode")
     ) {
-      return "💻 Coding";
+      return "vscode";
+    }
+    if (title.includes("intellij")) return "intellij";
+    if (title.includes("pycharm")) return "pycharm";
+    if (title.includes("webstorm")) return "webstorm";
+
+    // Git platforms
+    if (title.includes("github")) return "github";
+    if (title.includes("gitlab")) return "gitlab";
+
+    // MongoDB Cloud
+    if (title.includes("mongodb") || title.includes("cloud: mongodb cloud")) {
+      return "mongodb";
     }
 
-    // Music
-    if (
-      title.includes("spotify") ||
-      title.includes("youtube music") ||
-      title.includes("apple music") ||
-      title.includes("winamp") ||
-      title.includes("music") ||
-      title.includes("soundcloud")
-    ) {
-      return "🎵 Music";
+    // Claude
+    if (title.includes("claude")) return "claude";
+
+    // Discord
+    if (title.includes("discord")) return "discord";
+
+    // YouTube
+    if (title.includes("youtube")) return "youtube";
+
+    // Netflix / Prime / Disney
+    if (title.includes("netflix")) return "netflix";
+    if (title.includes("prime video")) return "prime";
+    if (title.includes("disney+")) return "disney";
+
+    // Spotify
+    if (title.includes("spotify")) return "spotify";
+
+    // Notion / Docs / Gmail
+    if (title.includes("notion")) return "notion";
+    if (title.includes("google docs")) return "gdocs";
+    if (title.includes("gmail")) return "gmail";
+
+    // Slack / Teams
+    if (title.includes("slack")) return "slack";
+    if (title.includes("teams")) return "teams";
+
+    // Fallback: extract first part of title
+    let fallback = appTitle
+      .replace(/<[^>]+>/g, "") // remove wrappers
+      .split(/[-|·]/)[0] // take first part
+      .replace(/^\(\d+\)\s*/, "") // remove "(4)" notifications
+      .trim();
+
+    // Limit to 10 chars
+    if (fallback.length > 10) {
+      fallback = fallback.slice(0, 10);
     }
 
-    // Movies/Entertainment
-    if (
-      title.includes("netflix") ||
-      title.includes("youtube") ||
-      title.includes("prime video") ||
-      title.includes("disney+") ||
-      title.includes("twitch") ||
-      title.includes("movie") ||
-      title.includes("watch") ||
-      title.includes("hulu")
-    ) {
-      return "🎬 Watching Movies";
-    }
-
-    // Working/Productivity
-    if (
-      title.includes("word") ||
-      title.includes("excel") ||
-      title.includes("powerpoint") ||
-      title.includes("outlook") ||
-      title.includes("teams") ||
-      title.includes("slack") ||
-      title.includes("discord") ||
-      title.includes("gmail") ||
-      title.includes("google docs") ||
-      title.includes("notion") ||
-      title.includes("asana") ||
-      title.includes("jira") ||
-      title.includes("gmail")
-    ) {
-      return "💼 Working";
-    }
-
-    // Default
-    return "🌐 Browsing";
+    return fallback || "unknown";
   }
 
   private broadcast() {
