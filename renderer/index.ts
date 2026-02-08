@@ -1,32 +1,11 @@
-// Activities to display
-const activities = [
-  "Working coding.....",
-  "Writing....",
-  "Music....",
-  "Reading....",
-  "Debugging....",
-  "Designing....",
-  "Learning....",
-];
-
 let currentActivityIndex = 0;
 
-function rotateActivity(messageElement: HTMLElement) {
-  messageElement.textContent = activities[currentActivityIndex];
-  messageElement.style.opacity = "1";
-  currentActivityIndex = (currentActivityIndex + 1) % activities.length;
-  console.log("[Activity] Displaying activity:", messageElement.textContent);
-}
-
 function initializeActivity(messageElement: HTMLElement) {
-  // Show activities every 3 seconds
-  setInterval(() => rotateActivity(messageElement), 3000);
-
   // React to activity changes from the main process
   if (window.electron.onActivityChanged) {
     window.electron.onActivityChanged((data: any) => {
       console.log("[Activity] Activity changed:", data);
-      messageElement.textContent = data.activity || data.app || "...";
+      messageElement.textContent = data.category || data.activity || "...";
       messageElement.style.opacity = "1";
       console.log("[Activity] Displaying message:", messageElement.textContent);
       // Keep message visible permanently - no timeout to fade it out
