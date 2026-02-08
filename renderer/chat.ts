@@ -5,7 +5,7 @@ let rafStarted = false;
 export function initChat(
   socket: ReturnType<typeof io>,
   catsOnScreen: Record<string, HTMLElement>,
-  localCat: HTMLElement
+  localCat: HTMLElement,
 ) {
   let chatInput: HTMLInputElement | null = null;
 
@@ -153,9 +153,7 @@ export function initChat(
 
   function limitWords(text: string, max: number) {
     const words = text.split(/\s+/);
-    return words.length > max
-      ? words.slice(0, max).join(" ") + "…"
-      : text;
+    return words.length > max ? words.slice(0, max).join(" ") + "…" : text;
   }
 
   /* =============================
@@ -182,7 +180,7 @@ export function initChat(
   /* =============================
      NETWORK
   ============================== */
-  socket.on("chatMessage", ({ id, message }: { id: string; message: string }) => {
+  socket.on("chatMessage", ({id, message}: {id: string; message: string}) => {
     const cat = catsOnScreen[id];
     if (cat) showMessageBubble(message, cat);
   });
