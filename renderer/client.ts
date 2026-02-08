@@ -4,7 +4,7 @@ import {initChat} from "./chat";
 import {initAuth} from "./auth";
 
 const socket = io("http://localhost:3000");
-// const socket = io("http://10.122.203.11:3000"); 
+// const socket = io("http://10.122.203.11:3000");
 
 const catsOnScreen: Record<string, HTMLElement> = {};
 const keys: Record<string, boolean> = {};
@@ -141,7 +141,7 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   function sendMovement(x: number, y: number, anim: "idle" | "walk" | "jump") {
-   if (!signedIn) return;
+    if (!signedIn) return;
     socket.emit("move", {x, y, anim});
   }
 
@@ -157,23 +157,23 @@ window.addEventListener("DOMContentLoaded", () => {
       currentX = targetX;
       currentY = targetY;
     }
-    
+
     const dx = currentX - lastX;
     const dy = currentY - lastY;
     const velocity = Math.sqrt(dx * dx + dy * dy);
     lastX = currentX;
     lastY = currentY;
-    
+
     const flip = targetX < currentX ? -1 : 1;
 
-  if (isDragging) {
-    const stretch = Math.min(velocity * 0.04, 0.25);
-    const rotate = Math.max(Math.min(dx * 0.4, 12), -12);
+    if (isDragging) {
+      const stretch = Math.min(velocity * 0.04, 0.25);
+      const rotate = Math.max(Math.min(dx * 0.4, 12), -12);
 
-    catBody.style.transform = `scaleX(${flip * (1 + stretch)}) scaleY(${1 - stretch}) rotate(${rotate}deg)`;
-  } else {
-    catBody.style.transform = `scaleX(${flip}) scaleY(1) rotate(0deg)`;
-  }
+      catBody.style.transform = `scaleX(${flip * (1 + stretch)}) scaleY(${1 - stretch}) rotate(${rotate}deg)`;
+    } else {
+      catBody.style.transform = `scaleX(${flip}) scaleY(1) rotate(0deg)`;
+    }
 
     cat.style.transform = `translate(${currentX}px, ${currentY}px)`;
 
@@ -209,7 +209,7 @@ window.addEventListener("DOMContentLoaded", () => {
   // Default click through enabled
   if (signedIn) {
     window.electron.setClickThrough(true);
-  } 
+  }
 
   cat.addEventListener("mouseenter", () => {
     if (signedIn) {
@@ -246,11 +246,11 @@ window.addEventListener("DOMContentLoaded", () => {
   let offsetX = 0;
   let offsetY = 0;
   let currentX = (window.innerWidth - cat.offsetWidth) / 2;
-  let currentY = window.innerHeight - cat.offsetHeight - 8;
+  let currentY = window.innerHeight - cat.offsetHeight - 80;
   let targetX = currentX;
   let targetY = currentY;
   let lastX = currentX;
-  let lastY = currentY; 
+  let lastY = currentY;
 
   cat.addEventListener("mousedown", (e) => {
     if (!signedIn) return;
@@ -337,18 +337,24 @@ window.addEventListener("DOMContentLoaded", () => {
   let animFrame = 0;
 
   function updateCatSprite() {
-  if (isDragging) {
-    catBody.style.backgroundImage = "url('../assets/cat_drag.png')";
-  } else if (isCatMoving()) {
-    catBody.style.backgroundImage = `url('${walkFrames[animFrame % walkFrames.length]}')`;
-  } else {
-    catBody.style.backgroundImage = "url('../assets/cat_idle.png')";
+    if (isDragging) {
+      catBody.style.backgroundImage = "url('../assets/cat_drag.png')";
+    } else if (isCatMoving()) {
+      catBody.style.backgroundImage = `url('${walkFrames[animFrame % walkFrames.length]}')`;
+    } else {
+      catBody.style.backgroundImage = "url('../assets/cat_idle.png')";
+    }
   }
-}
   function isCatMoving() {
     if (!signedIn) return false;
 
-    return (isDragging || keys["ArrowUp"] || keys["ArrowDown"] || keys["ArrowLeft"] || keys["ArrowRight"]);
+    return (
+      isDragging ||
+      keys["ArrowUp"] ||
+      keys["ArrowDown"] ||
+      keys["ArrowLeft"] ||
+      keys["ArrowRight"]
+    );
   }
 
   function animateCatState() {

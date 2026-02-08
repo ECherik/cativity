@@ -117,7 +117,7 @@ class ActivityMonitoring {
 
     // Limit to 10 chars
     if (fallback.length > 10) {
-      fallback = fallback.slice(0, 10);
+      fallback = fallback.split(" - ")[0];
     }
 
     return fallback || "unknown";
