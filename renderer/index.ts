@@ -1,3 +1,39 @@
+// Activities to display
+const activities = [
+  "Working coding.....",
+  "Writing....",
+  "Music....",
+  "Reading....",
+  "Debugging....",
+  "Designing....",
+  "Learning....",
+];
+
+let currentActivityIndex = 0;
+
+function rotateActivity(messageElement: HTMLElement) {
+  messageElement.textContent = activities[currentActivityIndex];
+  messageElement.style.opacity = "1";
+  currentActivityIndex = (currentActivityIndex + 1) % activities.length;
+  console.log("[Activity] Displaying activity:", messageElement.textContent);
+}
+
+function initializeActivity(messageElement: HTMLElement) {
+  // Show activities every 3 seconds
+  setInterval(() => rotateActivity(messageElement), 3000);
+
+  // React to activity changes from the main process
+  if (window.electron.onActivityChanged) {
+    window.electron.onActivityChanged((data: any) => {
+      console.log("[Activity] Activity changed:", data);
+      messageElement.textContent = data.activity || data.app || "...";
+      messageElement.style.opacity = "1";
+      console.log("[Activity] Displaying message:", messageElement.textContent);
+      // Keep message visible permanently - no timeout to fade it out
+    });
+  }
+}
+
 const cat = document.getElementById("cat");
 const message = document.getElementById("message");
 
@@ -7,11 +43,10 @@ if (!cat) {
 
 if (!message) {
   throw new Error("Message element not found");
-} 
+}
 
 // Default click through enabled
 window.electron.setClickThrough(true);
-
 
 cat.addEventListener("mouseenter", () => {
   window.electron.setClickThrough(false);
@@ -133,7 +168,7 @@ const walkFrames = [
   "../assets/cat_walk1.png",
   "../assets/cat_idle.png",
   "../assets/cat_walk2.png",
-  "../assets/cat_idle.png"
+  "../assets/cat_idle.png",
 ];
 const walkDurations = [120, 80, 120, 80]; // ms for each frame
 const idleFrame = "../assets/cat_idle.png";
@@ -159,3 +194,5 @@ function animateCatState() {
 
 animateCatState();
 
+// Initialize activity display
+initializeActivity(message!);

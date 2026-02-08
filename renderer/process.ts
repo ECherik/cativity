@@ -1,11 +1,11 @@
 import * as PIXI from "pixi.js";
 import io from "socket.io-client";
-import { CatState } from "../shared/types";
+import {CatState} from "../shared/types";
 
 const app = new PIXI.Application({
   width: window.innerWidth,
   height: window.innerHeight,
-  transparent: true
+  transparent: true,
 });
 
 document.body.appendChild(app.view);
