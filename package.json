@@ -8,7 +8,8 @@
   "build:renderer": "esbuild ./renderer/client.ts --bundle --outfile=dist/renderer/client.js --platform=browser --target=es2020",
   "build:preload": "esbuild preload.ts --bundle --platform=node --outfile=dist/preload.js --external:electron",
   "build": "npm run build:main && npm run build:preload && npm run build:renderer",
-  "start": "npm run build && electron ."
+  "start": "npm run build && electron .",
+  "server": "ts-node server/server.ts"
 },
   "repository": {
     "type": "git",

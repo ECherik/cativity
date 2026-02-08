@@ -64,6 +64,7 @@ body {
     transform 0.12s ease,
     left 0.1s,
     top 0.1s;
+  transform-origin: center bottom;
 }
 
 .message {
