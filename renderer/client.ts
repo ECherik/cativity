@@ -1,6 +1,7 @@
 import io from "socket.io-client";
-import { Cat } from "../shared/types";
-import { initChat } from "./chat";
+import {Cat} from "../shared/types";
+import {initChat} from "./chat";
+import {app} from "electron";
 
 const socket = io("http://localhost:3000"); // adjust for production
 
@@ -11,271 +12,435 @@ window.addEventListener("DOMContentLoaded", () => {
   const cat = document.getElementById("cat")!;
   const catBody = document.getElementById("cat-body")!;
   const message = document.getElementById("message")!;
+  const catUsername = document.getElementById("cat-username")!;
+  const signIn = document.getElementById("sign-in")!;
+  let signedIn = false;
 
-// Create a new cat div
-function createCatElement(cat: Cat) {
-  const catDiv = document.createElement("div");
-  catDiv.className = "cat";
-  catDiv.id = cat.id;
+  // ✨ Hide cat initially
+  cat.hidden = true;
+  cat.style.display = "none";
 
-  const catBody = document.createElement("div");
-  catBody.className = "cat-body";
-  catDiv.appendChild(catBody);
+  function createSignInElement() {
+    signIn.innerHTML = `
+    <div class="sign-in-container">
+      <h2>Sign In</h2>
+      <input type="text" id="username" placeholder="Username" />
+       <div class="color-selection">
+        <label>Choose your cat color:</label>
+        <div class="color-options">
+          <div class="color-option" data-color="orange" style="background: #ff9966;" title="Orange"></div>
+          <div class="color-option" data-color="gray" style="background: #999999;" title="Gray"></div>
+          <div class="color-option" data-color="black" style="background: #333333;" title="Black"></div>
+          <div class="color-option" data-color="white" style="background: #ffffff; border: 2px solid #ddd;" title="White"></div>
+          <div class="color-option selected" data-color="brown" style="background: #8B4513;" title="Brown"></div>
+        </div>
+      </div>
+      <button id="sign-in-btn">Sign In</button>
+    </div>
+  `;
+    let selectedColor = "brown"; // Default color
 
-  const messageDiv = document.createElement("div");
-  messageDiv.className = "message";
-  messageDiv.textContent = cat.message || "";
-  catDiv.appendChild(messageDiv);
+    // Handle color selection
+    const colorOptions = document.querySelectorAll(".color-option");
+    colorOptions.forEach((option) => {
+      option.addEventListener("click", () => {
+        // Remove selected class from all
+        colorOptions.forEach((opt) => opt.classList.remove("selected"));
 
-  document.body.appendChild(catDiv);
-  return catDiv;
-}
+        // Add selected class to clicked option
+        option.classList.add("selected");
 
-initChat(socket, catsOnScreen, cat);
+        // Store selected color
+        selectedColor = option.getAttribute("data-color") || "brown";
+      });
+    });
 
-// Initialize all cats
-socket.on("init", (cats: Cat[]) => {
-  cats.forEach(cat => {
-    if (!catsOnScreen[cat.id]) {
-      catsOnScreen[cat.id] = createCatElement(cat);
-    }
-  });
-});
+    const signInBtn = document.getElementById("sign-in-btn")!;
+    signInBtn.addEventListener("click", () => {
+      const usernameInput = document.getElementById(
+        "username",
+      ) as HTMLInputElement;
+      const username = usernameInput.value;
 
-// New user joined
-socket.on("catJoined", (cat: Cat) => {
-  if (!catsOnScreen[cat.id]) {
-    catsOnScreen[cat.id] = createCatElement(cat);
-  }
-});
+      if (!username || username.trim() === "") {
+        alert("Please enter a username");
+        return;
+      }
 
-// Cat moved
-socket.on("catMoved", (cat: Cat) => {
-  const catDiv = catsOnScreen[cat.id];
-  if (!catDiv) return;
+      // Send username AND color to server
+      socket.emit("signIn", {username, color: selectedColor});
+    });
 
-  catDiv.style.transform = `translate(${cat.x}px, ${cat.y}px)`;
-  // Add animation logic based on cat.anim if you want
-
-  animateCatState();
-
-});
-
-// Cat sent message
-socket.on("catMessage", ({ id, message }: { id: string, message: string }) => {
-  const catDiv = catsOnScreen[id];
-  if (!catDiv) return;
-
-  const msgDiv = catDiv.querySelector(".message") as HTMLElement;
-  msgDiv.textContent = message;
-  msgDiv.style.opacity = "1";
-  setTimeout(() => (msgDiv.style.opacity = "0"), 2000);
-});
-
-// Cat disconnected
-socket.on("catLeft", (id: string) => {
-  const catDiv = catsOnScreen[id];
-  if (!catDiv) return;
-
-  catDiv.remove();
-  delete catsOnScreen[id];
-});
-
-// Send our movement every frame
-function sendMovement(x: number, y: number, anim: 'idle' | 'walk' | 'jump') {
-  socket.emit("move", { x, y, anim });
-}
-
-// Example: send movement in your existing movementLoop
-function movementLoop() {
-  const speed = isDragging ? 0.25 : 0.08;
-
-  currentX += (targetX - currentX) * speed;
-  currentY += (targetY - currentY) * speed;
-
-  if(!cat) return;
-  cat.style.transform = `translate(${currentX}px, ${currentY}px)`;
-  const flip = targetX < currentX ? -1 : 1; 
-  catBody.style.transform = `scaleX(${flip})`;
-
-  // Send movement to server
-  sendMovement(currentX, currentY, isCatMoving() ? 'walk' : 'idle');
-
-  requestAnimationFrame(movementLoop);
-}
-
-let currentActivityIndex = 0;
-
-function initializeActivity(messageElement: HTMLElement) {
-  // React to activity changes from the main process
-  if (window.electron.onActivityChanged) {
-    window.electron.onActivityChanged((data: any) => {
-      console.log("[Activity] Activity changed:", data);
-      messageElement.textContent = data.category || data.activity || "...";
-      messageElement.style.opacity = "1";
-      console.log("[Activity] Displaying message:", messageElement.textContent);
-      // Keep message visible permanently - no timeout to fade it out
+    // ✨ Also handle Enter key in username input
+    const usernameInput = document.getElementById(
+      "username",
+    ) as HTMLInputElement;
+    usernameInput?.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        signInBtn.click();
+      }
     });
   }
-}
+  // Apply cat color (when you receive cat data from server)
+  function applyCatColor(catElement: HTMLElement, color: string) {
+    const colorFilters = {
+      orange: "hue-rotate(10deg) saturate(1.5) brightness(1.1)",
+      gray: "grayscale(1) brightness(0.9)",
+      black: "brightness(0.4) saturate(0) contrast(1.2)",
+      white: "brightness(1.6) saturate(0.2) contrast(0.9)",
+      brown: "none", // Default light brown - no filter needed
+      darkbrown: "hue-rotate(-10deg) saturate(1.1) brightness(0.8)",
+      ginger: "hue-rotate(20deg) saturate(1.6) brightness(1.05)",
+      cream: "brightness(1.3) saturate(0.6) hue-rotate(5deg)",
+    };
 
-if (!cat) {
-  throw new Error("Cat element not found");
-}
+    const catBody = catElement.querySelector(".cat-body") as HTMLElement;
+    if (catBody) {
+      catBody.style.filter =
+        colorFilters[color as keyof typeof colorFilters] || colorFilters.brown;
+    }
+  }
+  // Create a new cat div
+  function createCatElement(cat: Cat) {
+    const catDiv = document.createElement("div");
+    catDiv.className = "cat";
+    catDiv.id = cat.id;
 
-if (!message) {
-  throw new Error("Message element not found");
-}
+    const catBody = document.createElement("div");
+    catBody.className = "cat-body";
+    catDiv.appendChild(catBody);
 
-// Default click through enabled
-// window.electron.setClickThrough(true);
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "message";
+    messageDiv.textContent = cat.message || "";
+    catDiv.appendChild(messageDiv);
 
-cat.addEventListener("mouseenter", () => {
-  window.electron.setClickThrough(false);
-  console.log("Mouse on cat");
-});
+    const catUsername = document.createElement("div");
+    catUsername.className = "cat-username";
+    catUsername.textContent = cat.username;
+    catDiv.appendChild(catUsername);
 
-cat.addEventListener("mouseleave", () => {
-  window.electron.setClickThrough(true);
-  console.log("Mouse NOT on cat");
-});
+    document.body.appendChild(catDiv);
+    // Apply color filter
+    applyCatColor(catDiv, cat.color);
+    return catDiv;
+  }
 
-cat.addEventListener("click", () => {
-  console.log("Cat clicked");
-  message.style.opacity = "1";
-  setTimeout(() => {
-    message.style.opacity = "0";
-  }, 2000);
-});
+  initChat(socket, catsOnScreen, cat);
+  socket.on("connect", () => {
+    console.log("Connected to server with ID:", socket.id);
+    createSignInElement();
 
-//Dragging 
-let isDragging = false;
-let offsetX = 0;
-let offsetY = 0;
+    // ✨ Make sure cat is hidden on connect
+    cat.hidden = true;
+    cat.style.display = "none";
+  });
 
-let currentX = (window.innerWidth - cat.offsetWidth) / 2;
-let currentY = window.innerHeight - cat.offsetHeight - 8;
-let targetX = currentX;
-let targetY = currentY;
+  socket.on("disconnect", () => {
+    console.log("Disconnected from server");
+    signIn.innerHTML = "";
+    signedIn = false;
 
-cat.style.position = "fixed";
-cat.style.left = "0";
-cat.style.top = "0";
-cat.style.willChange = "transform";
-cat.draggable = false;
+    // ✨ Hide cat on disconnect
+    cat.hidden = true;
+    cat.style.display = "none";
 
-cat.addEventListener("mousedown", (e) => {
-  isDragging = true;
-  offsetX = e.clientX - cat.getBoundingClientRect().left;
-  offsetY = e.clientY - cat.getBoundingClientRect().top;
-  window.electron.setClickThrough(false);
-});
+    // Optionally, you could clear the screen of cats or show a message
+  });
+  // Initialize all cats
+  socket.on("init", (cats: Cat[]) => {
+    console.log("Initializing cats:", cats);
 
-document.addEventListener("mousemove", (e) => {
-  if (!isDragging) return;
+    // ✨ Clear sign-in form
+    signIn.innerHTML = "";
+    signedIn = true;
 
-  const speed = 0.25;
-  const mouseX = e.clientX - offsetX;
-  const mouseY = e.clientY - offsetY;
+    // ✨ Show our own cat
+    cat.hidden = false;
+    cat.style.display = "block";
 
-  targetX += (mouseX - targetX) * speed;
-  targetY += (mouseY - targetY) * speed;
-});
+    // Set username for our cat
+    catUsername.textContent =
+      cats.find((c) => c.id === socket.id)?.username || "You";
 
-document.addEventListener("mouseup", () => {
-  if (!isDragging) return;
-  isDragging = false;
+    cats.forEach((c) => {
+      // Don't create a duplicate for our own cat
+      if (c.id === socket.id) {
+        applyCatColor(cat, c.color);
+        return;
+      }
 
-  targetY = window.innerHeight - cat.offsetHeight - 8;
-  targetX = currentX;
+      if (!catsOnScreen[c.id]) {
+        catsOnScreen[c.id] = createCatElement(c);
+      }
+    });
+  });
 
-  window.electron.setClickThrough(true);
-});
+  // New user joined
+  socket.on("catJoined", (c: Cat) => {
+    // Don't create a duplicate for our own cat
+    if (c.id === socket.id) {
+      applyCatColor(cat, c.color);
+      return;
+    }
 
-movementLoop();
+    if (!catsOnScreen[c.id]) {
+      catsOnScreen![c.id] = createCatElement(c);
+    }
+  });
 
+  // Cat moved
+  socket.on("catMoved", (cat: Cat) => {
+    const catDiv = catsOnScreen[cat.id];
+    if (!catDiv) return;
 
-//movement with arrow keys
+    catDiv.style.transform = `translate(${cat.x}px, ${cat.y}px)`;
+    // Add animation logic based on cat.anim if you want
 
-document.addEventListener("keydown", (e) => {
-  keys[e.key] = true;
-});
+    animateCatState();
+  });
 
-document.addEventListener("keyup", (e) => {
-  keys[e.key] = false;
-});
+  // Cat sent message
+  socket.on("catMessage", ({id, message}: {id: string; message: string}) => {
+    const catDiv = catsOnScreen[id];
+    if (!catDiv) return;
 
-const step = 5; // pixels per frame
+    const msgDiv = catDiv.querySelector(".message") as HTMLElement;
+    msgDiv.textContent = message;
+    msgDiv.style.opacity = "1";
+    setTimeout(() => (msgDiv.style.opacity = "0"), 2000);
+  });
 
-function moveCat() {
-  // Only move if not dragging
-  if (isDragging) {
+  // Cat disconnected
+  socket.on("catLeft", (id: string) => {
+    const catDiv = catsOnScreen[id];
+    if (!catDiv) return;
+
+    catDiv.remove();
+    delete catsOnScreen[id];
+  });
+
+  // Send our movement every frame
+  function sendMovement(x: number, y: number, anim: "idle" | "walk" | "jump") {
+    // ✨ Only send if signed in
+    if (!signedIn) return;
+    socket.emit("move", {x, y, anim});
+  }
+
+  // Example: send movement in your existing movementLoop
+  function movementLoop() {
+    const speed = isDragging ? 0.25 : 0.08;
+
+    currentX += (targetX - currentX) * speed;
+    currentY += (targetY - currentY) * speed;
+
+    if (!cat) return;
+    cat.style.transform = `translate(${currentX}px, ${currentY}px)`;
+    const flip = targetX < currentX ? -1 : 1;
+    catBody.style.transform = `scaleX(${flip})`;
+
+    // Send movement to server
+    sendMovement(currentX, currentY, isCatMoving() ? "walk" : "idle");
+
+    requestAnimationFrame(movementLoop);
+  }
+
+  let currentActivityIndex = 0;
+
+  function initializeActivity(messageElement: HTMLElement) {
+    // React to activity changes from the main process
+    if (window.electron.onActivityChanged) {
+      window.electron.onActivityChanged((data: any) => {
+        console.log("[Activity] Activity changed:", data);
+        messageElement.textContent = data.category || data.activity || "...";
+        messageElement.style.opacity = "1";
+        console.log(
+          "[Activity] Displaying message:",
+          messageElement.textContent,
+        );
+        // Keep message visible permanently - no timeout to fade it out
+      });
+    }
+  }
+
+  if (!cat) {
+    throw new Error("Cat element not found");
+  }
+
+  if (!message) {
+    throw new Error("Message element not found");
+  }
+
+  // Default click through enabled
+  // window.electron.setClickThrough(true);
+
+  cat.addEventListener("mouseenter", () => {
+    // ✨ Only disable click-through if signed in
+    if (signedIn) {
+      window.electron.setClickThrough(false);
+      console.log("Mouse on cat");
+    }
+  });
+
+  cat.addEventListener("mouseleave", () => {
+    // ✨ Only enable click-through if signed in
+    if (signedIn) {
+      window.electron.setClickThrough(true);
+      console.log("Mouse NOT on cat");
+    }
+  });
+
+  cat.addEventListener("click", () => {
+    // ✨ Only respond to clicks if signed in
+    if (!signedIn) return;
+
+    console.log("Cat clicked");
+    message.style.opacity = "1";
+    setTimeout(() => {
+      message.style.opacity = "0";
+    }, 2000);
+  });
+
+  //Dragging
+  let isDragging = false;
+  let offsetX = 0;
+  let offsetY = 0;
+  let currentX = (window.innerWidth - cat.offsetWidth) / 2;
+  let currentY = window.innerHeight - cat.offsetHeight - 8;
+  let targetX = currentX;
+  let targetY = currentY;
+
+  cat.style.position = "fixed";
+  cat.style.left = "0";
+  cat.style.top = "0";
+  cat.style.willChange = "transform";
+  cat.draggable = false;
+
+  cat.addEventListener("mousedown", (e) => {
+    // ✨ Only allow dragging if signed in
+    if (!signedIn) return;
+
+    isDragging = true;
+    offsetX = e.clientX - cat.getBoundingClientRect().left;
+    offsetY = e.clientY - cat.getBoundingClientRect().top;
+    window.electron.setClickThrough(false);
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!isDragging || !signedIn) return;
+
+    const speed = 0.25;
+    const mouseX = e.clientX - offsetX;
+    const mouseY = e.clientY - offsetY;
+
+    targetX += (mouseX - targetX) * speed;
+    targetY += (mouseY - targetY) * speed;
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (!isDragging) return;
+    isDragging = false;
+
+    targetY = window.innerHeight - cat.offsetHeight - 8;
+    targetX = currentX;
+
+    if (signedIn) {
+      window.electron.setClickThrough(true);
+    }
+  });
+
+  movementLoop();
+
+  //movement with arrow keys
+
+  document.addEventListener("keydown", (e) => {
+    // ✨ Only respond to arrow keys if signed in
+    if (!signedIn) return;
+    keys[e.key] = true;
+  });
+
+  document.addEventListener("keyup", (e) => {
+    // ✨ Only respond to arrow keys if signed in
+    if (!signedIn) return;
+    keys[e.key] = false;
+  });
+
+  const step = 5; // pixels per frame
+
+  function moveCat() {
+    // Only move if not dragging and signed in
+    if (isDragging || !signedIn) {
+      requestAnimationFrame(moveCat);
+      return;
+    }
+    if (!cat) return;
+    const margin = 8;
+    const catWidth = cat.offsetWidth;
+    const catHeight = cat.offsetHeight;
+    const maxX = window.innerWidth - catWidth - margin;
+    const maxY = window.innerHeight - catHeight - margin;
+
+    if (keys["ArrowUp"]) targetY = Math.max(margin, targetY - step);
+    if (keys["ArrowDown"]) targetY = Math.min(maxY, targetY + step);
+    if (keys["ArrowLeft"]) targetX = Math.max(margin, targetX - step);
+    if (keys["ArrowRight"]) targetX = Math.min(maxX, targetX + step);
+
     requestAnimationFrame(moveCat);
-    return;
   }
-  if (!cat) return;
-  const margin = 8;
-  const catWidth = cat.offsetWidth;
-  const catHeight = cat.offsetHeight;
-  const maxX = window.innerWidth - catWidth - margin;
-  const maxY = window.innerHeight - catHeight - margin;
+  moveCat();
 
-  if (keys["ArrowUp"]) targetY = Math.max(margin, targetY - step);
-  if (keys["ArrowDown"]) targetY = Math.min(maxY, targetY + step);
-  if (keys["ArrowLeft"]) targetX = Math.max(margin, targetX - step);
-  if (keys["ArrowRight"]) targetX = Math.min(maxX, targetX + step);
+  // Animation: idle vs moving with per-frame durations
+  const walkFrames = [
+    "../assets/cat_walk1.png",
+    "../assets/cat_idle.png",
+    "../assets/cat_walk2.png",
+    "../assets/cat_idle.png",
+  ];
+  const walkDurations = [120, 80, 120, 80]; // ms for each frame
+  const idleFrame = "../assets/cat_idle.png";
+  let animFrame = 0;
 
-  requestAnimationFrame(moveCat);
-}
-moveCat();
+  function isCatMoving() {
+    // ✨ Only check movement if signed in
+    if (!signedIn) return false;
 
-// Animation: idle vs moving with per-frame durations
-const walkFrames = [
-  "../assets/cat_walk1.png",
-  "../assets/cat_idle.png",
-  "../assets/cat_walk2.png",
-  "../assets/cat_idle.png",
-];
-const walkDurations = [120, 80, 120, 80]; // ms for each frame
-const idleFrame = "../assets/cat_idle.png";
-let animFrame = 0;
-
-function isCatMoving() {
-  return isDragging || keys["ArrowUp"] || keys["ArrowDown"] || keys["ArrowLeft"] || keys["ArrowRight"];
-}
-
-function animateCatState() {
-  if (isCatMoving()) {
-    catBody.style.backgroundImage = `url('${walkFrames[animFrame % walkFrames.length]}')`;
-    const duration = walkDurations[animFrame % walkDurations.length];
-    animFrame = (animFrame + 1) % walkFrames.length;
-    setTimeout(animateCatState, duration);
-  } else {
-    catBody.style.backgroundImage = `url('${idleFrame}')`;
-    animFrame = 0;
-    setTimeout(animateCatState, 120);
+    return (
+      isDragging ||
+      keys["ArrowUp"] ||
+      keys["ArrowDown"] ||
+      keys["ArrowLeft"] ||
+      keys["ArrowRight"]
+    );
   }
-}
-animateCatState();
 
+  function animateCatState() {
+    // ✨ Only animate if signed in
+    if (!signedIn) {
+      setTimeout(animateCatState, 120);
+      return;
+    }
 
-function faceDirection(cat: HTMLElement, direction: "left" | "right") {
-  if (direction === "left") {
-    cat.style.transform = `translate(${currentX}px, ${currentY}px) scaleX(-1)`;
-  } else {
-    cat.style.transform = `translate(${currentX}px, ${currentY}px) scaleX(1)`;
+    if (isCatMoving()) {
+      catBody.style.backgroundImage = `url('${walkFrames[animFrame % walkFrames.length]}')`;
+      const duration = walkDurations[animFrame % walkDurations.length];
+      animFrame = (animFrame + 1) % walkFrames.length;
+      setTimeout(animateCatState, duration);
+    } else {
+      catBody.style.backgroundImage = `url('${idleFrame}')`;
+      animFrame = 0;
+      setTimeout(animateCatState, 120);
+    }
   }
-}
+  animateCatState();
 
-// Initialize activity display
-initializeActivity(message!);
+  function faceDirection(cat: HTMLElement, direction: "left" | "right") {
+    if (direction === "left") {
+      cat.style.transform = `translate(${currentX}px, ${currentY}px) scaleX(-1)`;
+    } else {
+      cat.style.transform = `translate(${currentX}px, ${currentY}px) scaleX(1)`;
+    }
+  }
 
-
-
+  // Initialize activity display
+  initializeActivity(message!);
 });
-
-
-
-
-
-

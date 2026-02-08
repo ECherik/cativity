@@ -1,9 +1,11 @@
-export interface Cat{
+export interface Cat {
   id: string;
   x: number;
   y: number;
-  anim: 'idle' | 'walk' | 'jump';
+  anim: "idle" | "walk" | "jump";
   message?: string;
+  username: string;
+  color: string;
 }
 
 export interface ChatMessagePayload {
