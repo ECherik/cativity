@@ -16,7 +16,6 @@ window.addEventListener("DOMContentLoaded", () => {
   const signIn = document.getElementById("sign-in")!;
   let signedIn = false;
 
-  // ✨ Hide cat initially
   cat.hidden = true;
   cat.style.display = "none";
 
@@ -71,10 +70,7 @@ window.addEventListener("DOMContentLoaded", () => {
       socket.emit("signIn", {username, color: selectedColor});
     });
 
-    // ✨ Also handle Enter key in username input
-    const usernameInput = document.getElementById(
-      "username",
-    ) as HTMLInputElement;
+    const usernameInput = document.getElementById( "username",) as HTMLInputElement;
     usernameInput?.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
         signInBtn.click();
@@ -131,7 +127,6 @@ window.addEventListener("DOMContentLoaded", () => {
     console.log("Connected to server with ID:", socket.id);
     createSignInElement();
 
-    // ✨ Make sure cat is hidden on connect
     cat.hidden = true;
     cat.style.display = "none";
   });
@@ -141,21 +136,19 @@ window.addEventListener("DOMContentLoaded", () => {
     signIn.innerHTML = "";
     signedIn = false;
 
-    // ✨ Hide cat on disconnect
+    // Hide cat on disconnect
     cat.hidden = true;
     cat.style.display = "none";
-
-    // Optionally, you could clear the screen of cats or show a message
   });
+
   // Initialize all cats
   socket.on("init", (cats: Cat[]) => {
     console.log("Initializing cats:", cats);
 
-    // ✨ Clear sign-in form
     signIn.innerHTML = "";
     signedIn = true;
 
-    // ✨ Show our own cat
+    // Show our own cat
     cat.hidden = false;
     cat.style.display = "block";
 
@@ -272,10 +265,11 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   // Default click through enabled
-  // window.electron.setClickThrough(true);
+  if (signedIn) {
+    window.electron.setClickThrough(true);
+  } 
 
   cat.addEventListener("mouseenter", () => {
-    // ✨ Only disable click-through if signed in
     if (signedIn) {
       window.electron.setClickThrough(false);
       console.log("Mouse on cat");
@@ -283,7 +277,6 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   cat.addEventListener("mouseleave", () => {
-    // ✨ Only enable click-through if signed in
     if (signedIn) {
       window.electron.setClickThrough(true);
       console.log("Mouse NOT on cat");
@@ -291,7 +284,6 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   cat.addEventListener("click", () => {
-    // ✨ Only respond to clicks if signed in
     if (!signedIn) return;
 
     console.log("Cat clicked");
@@ -317,7 +309,6 @@ window.addEventListener("DOMContentLoaded", () => {
   cat.draggable = false;
 
   cat.addEventListener("mousedown", (e) => {
-    // ✨ Only allow dragging if signed in
     if (!signedIn) return;
 
     isDragging = true;
