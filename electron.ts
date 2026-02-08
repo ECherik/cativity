@@ -20,7 +20,7 @@ function createWindow() {
   win.loadFile(path.join(__dirname, '../renderer/index.html'));
 
   // For debugging
-  // win.webContents.openDevTools();
+  win.webContents.openDevTools();
 
   ipcMain.on("set-click-through", (_, enabled: boolean) => {
     win.setIgnoreMouseEvents(enabled, { forward: true });
